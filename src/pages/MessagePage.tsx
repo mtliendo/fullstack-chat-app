@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Schema } from '../../amplify/data/resource'
 import { generateClient } from 'aws-amplify/api'
@@ -6,13 +6,32 @@ import clsx from 'clsx'
 import { useAuthenticator } from '@aws-amplify/ui-react'
 import { uploadData } from 'aws-amplify/storage'
 import { StorageImage } from '@aws-amplify/ui-react-storage'
+import { fetchAuthSession } from 'aws-amplify/auth'
 
 const client = generateClient<Schema>()
 
+function formatTime(dateString: string): string {
+	const date = new Date(dateString)
+
+	// Create an Intl.DateTimeFormat object with the desired options
+	const formatter = new Intl.DateTimeFormat('en-US', {
+		hour: 'numeric',
+		minute: 'numeric',
+		hour12: true, // Use 24-hour format. Set to true if you want 12-hour format with AM/PM.
+	})
+
+	// Format the date object
+	const formattedTime = formatter.format(date)
+
+	return formattedTime
+}
+
 const MessagePage = () => {
 	const { user } = useAuthenticator((context) => [context.user])
-
+	const [userNickname, setUserNickname] = useState('')
 	const { roomName } = useParams()
+	const fileInputRef = useRef(null)
+
 	const [roomDetails, setRoomDetails] = useState<{
 		roomId: string
 		name: string
@@ -43,7 +62,11 @@ const MessagePage = () => {
 			}
 		).then(({ data }) => {
 			console.log('the data', data)
-
+			//sort messages by 'createdAt' field
+			data[0].messages.sort(
+				(a, b) =>
+					new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+			)
 			setMsgs(data[0].messages)
 			setRoomDetails({
 				roomId: data[0].id,
@@ -51,6 +74,13 @@ const MessagePage = () => {
 			})
 		})
 	}, [roomName])
+
+	useEffect(() => {
+		fetchAuthSession().then((user2) => {
+			console.log(user2.tokens?.idToken?.payload['nickname'])
+			setUserNickname(user2.tokens?.idToken?.payload['nickname'] as string)
+		})
+	}, [])
 
 	const handleSubmit = async (e: FormEvent) => {
 		e.preventDefault()
@@ -60,6 +90,7 @@ const MessagePage = () => {
 				roomId: roomDetails?.roomId as string,
 				type: 'text',
 				content: msgText,
+				userNickname,
 			})
 			setMsgs((prev) => [...prev, { ...newMessage }])
 			setMsgText('')
@@ -77,13 +108,16 @@ const MessagePage = () => {
 				roomId: roomDetails?.roomId as string,
 				type: 'image',
 				picId: uploadedItem.path,
+				userNickname,
 			})
 
 			setMsgs((prev) => [...prev, { ...newMessage }])
+			setMsgFile(null)
+			fileInputRef.current.value = null
 		}
 	}
 	return (
-		<div className="flex flex-col h-full">
+		<div className="flex flex-col h-screen">
 			<div className="flex-1 overflow-y-auto p-6 space-y-4">
 				{msgs.map((msg) => (
 					<div
@@ -100,6 +134,13 @@ const MessagePage = () => {
 									msg.owner !== user.username ? 'chat-start' : 'chat-end'
 								)}
 							>
+								<div className="chat-header">
+									{msg.userNickname}
+									<time className="text-xs opacity-50">
+										{' '}
+										{formatTime(msg.createdAt)}
+									</time>
+								</div>
 								<p
 									className={clsx(
 										'chat-bubble',
@@ -119,6 +160,13 @@ const MessagePage = () => {
 									msg.owner !== user.username ? 'chat-start' : 'chat-end'
 								)}
 							>
+								<div className="chat-header">
+									{userNickname}
+									<time className="text-xs opacity-50">
+										{' '}
+										{formatTime(msg.createdAt)}
+									</time>
+								</div>
 								<StorageImage
 									path={msg.picId}
 									alt=""
@@ -147,6 +195,7 @@ const MessagePage = () => {
 				/>
 				<input
 					type="file"
+					ref={fileInputRef}
 					onChange={(e) => e.target.files && setMsgFile(e.target.files[0])}
 					className="file-input file-input-bordered file-input-primary w-full max-w-xs mx-4"
 				/>

@@ -16,6 +16,7 @@ const schema = a.schema({
 			content: a.string(),
 			picId: a.string(),
 			room: a.belongsTo('Room', 'roomId'),
+			userNickname: a.string().required(),
 		})
 		.authorization((allow) => [
 			allow.owner().to(['read', 'create']),
