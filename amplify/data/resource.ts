@@ -11,8 +11,10 @@ const schema = a.schema({
 		.authorization((allow) => [allow.authenticated().to(['create', 'read'])]),
 	Message: a
 		.model({
-			content: a.string().required(),
 			roomId: a.id().required(),
+			type: a.enum(['text', 'image']),
+			content: a.string(),
+			picId: a.string(),
 			room: a.belongsTo('Room', 'roomId'),
 		})
 		.authorization((allow) => [

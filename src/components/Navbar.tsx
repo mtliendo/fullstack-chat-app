@@ -20,7 +20,7 @@ const Navbar = () => {
 				</Link>
 			</div>
 			<div className="flex-1">
-				<p className=" w-full text-center">Welcome, {fetchedUserNickname}</p>
+				<p className=" w-full text-center">Welcome {fetchedUserNickname}</p>
 			</div>
 			<div>
 				<ul className="menu menu-horizontal px-1">
