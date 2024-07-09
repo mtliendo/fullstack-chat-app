@@ -27,7 +27,7 @@ const schema = a.schema({
 export type Schema = ClientSchema<typeof schema>
 
 export const data = defineData({
-	name: 'fullstack-chat',
+	name: 'luke-chat',
 	schema,
 	authorizationModes: {
 		defaultAuthorizationMode: 'userPool',

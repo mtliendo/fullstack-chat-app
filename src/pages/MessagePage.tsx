@@ -30,7 +30,7 @@ const MessagePage = () => {
 	const { user } = useAuthenticator((context) => [context.user])
 	const [userNickname, setUserNickname] = useState('')
 	const { roomName } = useParams()
-	const fileInputRef = useRef(null)
+	const fileInputRef = useRef<HTMLInputElement | null>(null)
 
 	const [roomDetails, setRoomDetails] = useState<{
 		roomId: string
@@ -67,7 +67,7 @@ const MessagePage = () => {
 				(a, b) =>
 					new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
 			)
-			setMsgs(data[0].messages)
+			setMsgs(data[0].messages as Schema['Message']['type'][])
 			setRoomDetails({
 				roomId: data[0].id,
 				name: data[0].name,
@@ -92,7 +92,9 @@ const MessagePage = () => {
 				content: msgText,
 				userNickname,
 			})
-			setMsgs((prev) => [...prev, { ...newMessage }])
+			setMsgs(
+				(prev) => [...prev, { ...newMessage }] as Schema['Message']['type'][]
+			)
 			setMsgText('')
 			console.log('nothing', newMessage)
 		}
@@ -111,9 +113,13 @@ const MessagePage = () => {
 				userNickname,
 			})
 
-			setMsgs((prev) => [...prev, { ...newMessage }])
+			setMsgs(
+				(prev) => [...prev, { ...newMessage }] as Schema['Message']['type'][]
+			)
 			setMsgFile(null)
-			fileInputRef.current.value = null
+			if (fileInputRef.current) {
+				fileInputRef.current.value = ''
+			}
 		}
 	}
 	return (

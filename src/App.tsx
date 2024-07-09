@@ -26,6 +26,9 @@ const router = createBrowserRouter([
 						path: '/rooms/:roomName',
 						element: <MessagePage />,
 					},
+					{
+						path: '/rooms/create',
+					},
 				],
 			},
 		],
